@@ -116,8 +116,7 @@ class Dase_DBO_Node extends Dase_DBO_Autogen_Node
 
 		public function asPhp($r,$get_attachments = true)
 		{
-				$obj_ar = $this->asArray();
-				$obj_ar['id'] = $this->id;
+				$obj = $this->asObj();
 				$meta = array();
 				foreach ($this->getAttvals() as $attval) {
 						if (!isset($meta[$attval->att_ascii])) {
@@ -125,7 +124,7 @@ class Dase_DBO_Node extends Dase_DBO_Autogen_Node
 						}
 						$meta[$attval->att_ascii][] = $attval->value;
 				}
-				$obj_ar['meta'] = $meta;
+				$obj->meta = $meta;
 
 				if ($get_attachments) {
 						$attachments = array();
@@ -145,8 +144,8 @@ class Dase_DBO_Node extends Dase_DBO_Autogen_Node
 										$attachments[$at->name]['items'] = $nodeset->asPhp($r);
 								}
 						}
-						$obj_ar['attachments'] = $attachments;
+						$obj->attachments = $attachments;
 				}
-				return $obj_ar;
+				return $obj;
 		}
 }

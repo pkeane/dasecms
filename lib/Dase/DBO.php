@@ -375,6 +375,16 @@ class Dase_DBO implements IteratorAggregate
 		return new ArrayObject($this->fields);
 	}
 
+	public function asObj()
+	{
+			$obj = new stdClass();
+			foreach ($this->fields as $k => $v) {
+					$obj->$k = $v;
+			}
+			$obj->id = $this->id;
+			return $obj;
+	}
+
 	public function asArray()
 	{
 		foreach ($this->fields as $k => $v) {

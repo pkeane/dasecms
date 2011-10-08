@@ -46,7 +46,12 @@ class Dase_Handler_Page extends Dase_Handler
 				if ('image' == substr($node->mime,0,5)) {
 						$t->assign('is_image',1);
 				}
-				$r->renderResponse($t->fetch('page.tpl'));
+				$template_file = 'pages/page-'.$node->alias.'.tpl';
+				if ($t->template_exists($template_file)) {
+						$r->renderResponse($t->fetch($template_file));
+				} else {
+						$r->renderResponse($t->fetch('page.tpl'));
+				}   
 		}
 
 		public function getDynamicPage($r,$uri_path)
