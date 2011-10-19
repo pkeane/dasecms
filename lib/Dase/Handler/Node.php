@@ -389,6 +389,9 @@ class Dase_Handler_Node extends Dase_Handler
 						$node->name = $name;
 						$node = $node->findOne();
 				}
+				if (!$node) { 
+						$r->renderError(404); 
+				}
 
 				$node->getAttvals();
 				$node->getAttachments();
