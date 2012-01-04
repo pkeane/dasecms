@@ -104,7 +104,11 @@ class Dase_Handler_Nodeset extends Dase_Handler
 				if ('lt' == $filter->operator) {
 						$filter->operator = '<';
 				}
-				$filter->value = $r->get('value');
+				if ($r->get('defined_value')) {
+						$filter->value = $r->get('defined_value');
+				} else {
+						$filter->value = $r->get('value');
+				}
 				$filter->nodeset_id = $ns->id;
 				$filter->insert();
 				$r->renderRedirect('nodeset/'.$ns->id);

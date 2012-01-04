@@ -74,6 +74,20 @@
 		</tr>
 
 		<tr>
+			<th>hook</th>
+			<td>
+				{$node->hook}
+				<a href="#" class="toggle" id="toggleNodeHook">[update]</a>
+				<div class="hide" id="targetNodeHook">
+					<form action="node/{$node->id}/hook" method="put">
+						<input type="text" name="hook" value="{$node->hook}">
+						<input type="submit" value="update">
+					</form>
+				</div>
+			</td>
+		</tr>
+
+		<tr>
 			<th>alias</th>
 			<td>
 				<a href="file/{$node->alias}">{$node->alias}</a>
@@ -197,6 +211,17 @@
 					<label for="uploaded_file">select a file</label>
 					<input type="file" name="uploaded_file"/>
 					<input type="submit" value="swap in file"/>
+					</p>
+				</form>
+			</td>
+		</tr>
+
+		<tr>
+			<th>delete node</th>
+			<td>
+				<form action="node/{$node->id}" method="delete">
+					<p>
+					<input type="submit" class="delete" value="delete this node"/>
 					</p>
 				</form>
 			</td>

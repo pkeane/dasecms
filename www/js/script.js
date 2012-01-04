@@ -2,6 +2,7 @@ var Dase = {};
 
 $(document).ready(function() {
 	Dase.initDelete('topMenu');
+	Dase.initDelete('login');
 	Dase.initDelete('filters');
 	Dase.initDelete('sorters');
 	Dase.initDelete('node_meta');
@@ -16,7 +17,27 @@ $(document).ready(function() {
 	Dase.initAttachmentForm();
 	Dase.initAttvalForm();
 	Dase.initPreviewForm();
+	Dase.initLabSelector();
+	Dase.initJumpToPage();
 });
+
+Dase.initLabSelector = function() {
+	$('ul#lab_selector li').hover(function() {
+		$('#banners img').hide(); 
+		var id = $(this).attr('class');
+		$('#'+id).show();
+	});
+	$('#banners').hover(function() {
+		$('#banners img').hide(); 
+		$('#front').show();
+	});
+};
+
+Dase.initJumpToPage = function() {
+	$('form[action="jump_to_page"]').submit(function() {
+		$(this).attr('action',$(this).find("select option:selected").val());
+	});
+}
 
 Dase.initPreviewForm = function() {
 	$('#preview_form').submit(function() {
@@ -30,16 +51,16 @@ Dase.initPreviewForm = function() {
 };
 
 Dase.initAttvalForm = function() {
-	$('select[name="att_ascii"]').change(function() {
-		$('select option:selected').each(function() {
+	$('#filters select[name="att_ascii"]').change(function() {
+		$('#filters select[name="att_ascii"] option:selected').each(function() {
 			var att_ascii = $(this).attr('value');
 			$.get('attribute/'+att_ascii+'/defined', function(data) {
 				if (data) {
-					$('input[name="value"]').hide();
-					$('select[name="defined_value"]').html(data).show();
+					$('#filters input[name="value"]').hide();
+					$('#filters select[name="defined_value"]').html(data).show();
 				} else {
-					$('select[name="defined_value"]').hide();
-					$('input[name="value"]').show();
+					$('#filters select[name="defined_value"]').hide();
+					$('#filters input[name="value"]').show();
 				}
 			});
 		});
@@ -85,8 +106,12 @@ Dase.initFormDelete = function() {
 			var del_o = {
 				'url': $(this).attr('action'),
 				'type':'DELETE',
-				'success': function() {
-					location.reload();
+				'success': function(resp) {
+					if (resp.location) {
+						location.href = resp.location;
+					} else {
+						location.reload();
+					}
 				},
 				'error': function() {
 					alert('sorry, cannot delete');

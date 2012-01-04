@@ -5,6 +5,7 @@ require_once 'Dase/DBO/Autogen/Node.php';
 class Dase_DBO_Node extends Dase_DBO_Autogen_Node 
 {
 		public $attvals = array();
+		public $meta = array();
 		public $attachments = array();
 		public $request_vars = array();
 
@@ -45,6 +46,7 @@ class Dase_DBO_Node extends Dase_DBO_Autogen_Node
 						return $size.'Mb';
 
 				}
+				//only works w/ actual nodes NOT stdClass (node->toPhp)
 				if (isset($this->meta[$key]) && isset($this->meta[$key][0])) {
 						return $this->meta[$key][0];
 				}
@@ -56,6 +58,16 @@ class Dase_DBO_Node extends Dase_DBO_Autogen_Node
 						}
 				}
 				return parent::__get($key);
+		}
+
+		public function runHook(&$request,&$template) 
+		{
+				if ($this->hook) {
+						$class = Dase_Util::camelize($this->hook);
+						if (class_exists($class)) {
+								$class::run($request,$template,$this);
+						}
+				}
 		}
 
 		public static function nodeMultiSort($node_set,$field)
@@ -90,11 +102,33 @@ class Dase_DBO_Node extends Dase_DBO_Autogen_Node
 				}
 		}
 
+		public function expunge()
+		{
+				foreach ($this->getAttvals() as $av) {
+						$av->delete();
+				}
+				foreach ($this->getAttachments() as $at) {
+						$at->delete();
+				}
+				if ($this->delete()) {
+						return true;
+				}
+		}
+
 		public function getAttvals()
 		{
 				$attvals = new Dase_DBO_Attval($this->db);
 				$attvals->node_id = $this->id;
 				$this->attvals = $attvals->findAll(1);
+				$meta = array();
+				//for nodeset sorting
+				foreach ($this->attvals as $attval) {
+						if (!isset($meta[$attval->att_ascii])) {
+								$meta[$attval->att_ascii] = array();
+						}
+						$meta[$attval->att_ascii][] = $attval->value;
+				}
+				$this->meta = $meta;
 				return $this->attvals;
 		}
 
@@ -116,7 +150,7 @@ class Dase_DBO_Node extends Dase_DBO_Autogen_Node
 
 		public function asPhp($r,$get_attachments = true)
 		{
-				$obj = $this->asObj();
+				$obj = new Dase_Node($this);
 				$meta = array();
 				foreach ($this->getAttvals() as $attval) {
 						if (!isset($meta[$attval->att_ascii])) {
@@ -145,6 +179,12 @@ class Dase_DBO_Node extends Dase_DBO_Autogen_Node
 								}
 						}
 						$obj->attachments = $attachments;
+						//also direct accessors
+						foreach ($attachments as $k => $v) {
+								if (!isset($obj->$k)) {
+										$obj->$k = $v;
+								}
+						}
 				}
 				return $obj;
 		}

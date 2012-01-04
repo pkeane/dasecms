@@ -1,6 +1,6 @@
 <?php
 
-ini_set('include_path',BASE_PATH.'/lib');
+ini_set('include_path',BASE_PATH.'/lib:'.BASE_PATH.'/hooks');
 
 function __autoload($class_name) {
 	$class_name = str_replace('_','/',$class_name).'.php';

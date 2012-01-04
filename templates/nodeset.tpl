@@ -20,7 +20,7 @@
 	</tr>
 	{/foreach}
 	<tr>
-		<form action="nodeset/{$nodeset->id}/filters" method="post">
+		<form id="filters" action="nodeset/{$nodeset->id}/filters" method="post">
 			<th>
 				<select name="att_ascii">
 					<option>select one:</option>
@@ -49,9 +49,11 @@
 					<option value="gt">is greater than</option>
 					<option value="lt">is less than</option>
 					<option value="like">like</option>
+					<option value="omit_if">omit if equals</option>
 				</select>
 			</td>
 			<td>
+				<select class="hide" name="defined_value"></select>
 				<input type="text" name="value">
 				<input type="submit" value="add">
 				{if $node->dynamic_alias}
@@ -85,7 +87,7 @@
 	</tr>
 	{/foreach}
 	<tr>
-		<form action="nodeset/{$nodeset->id}/sorters" method="post">
+		<form id="sorters" action="nodeset/{$nodeset->id}/sorters" method="post">
 			<th>
 				<select name="att_ascii">
 					<option>select one:</option>

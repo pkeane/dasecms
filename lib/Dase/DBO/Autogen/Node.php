@@ -13,7 +13,7 @@ class Dase_DBO_Autogen_Node extends Dase_DBO
 {
 	public function __construct($db,$assoc = false) 
 	{
-		parent::__construct($db,'node', array('name','title','body','type','filepath','alias','dynamic_alias','thumbnail_path','filesize','mime','width','height','created','created_by','updated','updated_by','thumbnail_url'));
+		parent::__construct($db,'node', array('name','title','body','type','filepath','alias','hook','dynamic_alias','thumbnail_path','filesize','mime','width','height','created','created_by','updated','updated_by','thumbnail_url'));
 		if ($assoc) {
 			foreach ( $assoc as $key => $value) {
 				$this->$key = $value;

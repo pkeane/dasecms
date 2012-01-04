@@ -19,7 +19,7 @@ p {
 
 div#container {
 	margin: 0px auto;
-	width: 95%;
+	width: 90%;
 	/*
 	width: 956px;
 	*/
@@ -68,11 +68,13 @@ div#header a.delete {
 div#main {
 	margin 0;
 	background-color: #fff;
+	/*
 	border: 1px solid #ccc;
 	-moz-border-radius: 5px;
 	-webkit-border-radius: 5px;
 	border-radius: 5px;
 	padding: 15px 20px;
+	*/
 }
 
 #footer {

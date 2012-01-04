@@ -72,37 +72,62 @@ class Dase_DBO_Nodeset extends Dase_DBO_Autogen_Nodeset
 		{
 				$node_id_array = array();
 				$nodes = new Dase_DBO_Node($this->db);
+				$poison_node_id_array = array();
+
+				//cannot declare av_node_id_array here
+				//since we need to know if a filter eliminates
+				//every node
 
 				$filters = $this->getFilters();
 				foreach ($filters as $filter) {
 						if ('{' == substr($filter->value,0,1) && '}' == substr($filter->value,-1)) {
+								//will get value from GET param
 								$value = $r->get(trim($filter->value,'{}'));
 						} else {
 								$value = $filter->value;
 						}
-						if ('_' == substr($filter->att_ascii,0,1)) {
-								$field = substr($filter->att_ascii,1);
-								if ('exists' == $filter->operator) {
-										$nodes->addWhere($field,'','>');
+						if ('omit_if' == $filter->operator) {
+								if ('_' == substr($filter->att_ascii,0,1)) {
+										$poison_nodes = new Dase_DBO_Node($this->db);
+										$pfield = substr($filter->att_ascii,1);
+										$poison_nodes->$pfield = $value;
+										foreach ($poison_nodes->findAll(1) as $pn) {
+												$poison_node_id_array[] = $pn->id;
+										}
 								} else {
-										$nodes->addWhere($field,$value,$filter->operator);
+										$pattvals = new Dase_DBO_Attval($this->db);
+										$pattvals->att_ascii = $filter->att_ascii;
+										$pattvals->value = $value;
+										foreach ($pattvals->findAll(1) as $pav) {
+												$poison_node_id_array[] = $pav->node_id;
+										}
 								}
 						} else {
-								$attvals = new Dase_DBO_Attval($this->db);
-								$attvals->att_ascii = $filter->att_ascii;
-								if ('exists' == $filter->operator) {
-										$attvals->addWhere('value','','>');
+								//everything OTHER than omit_if
+								if ('_' == substr($filter->att_ascii,0,1)) {
+										$field = substr($filter->att_ascii,1);
+										if ('exists' == $filter->operator) {
+												$nodes->addWhere($field,'','>');
+										} else {
+												$nodes->addWhere($field,$value,$filter->operator);
+										}
 								} else {
-										$attvals->addWhere('value',$value,$filter->operator);
-								}
-								$node_ids = array();
-								foreach ($attvals->findAll(1) as $av) {
-										$node_ids[] = $av->node_id;
-								}
-								if (!isset($av_node_id_array)) {
-										$av_node_id_array = $node_ids;
-								} else {
-										$av_node_id_array = array_intersect($av_node_id_array,$node_ids);
+										$attvals = new Dase_DBO_Attval($this->db);
+										$attvals->att_ascii = $filter->att_ascii;
+										if ('exists' == $filter->operator) {
+												$attvals->addWhere('value','','>');
+										} else {
+												$attvals->addWhere('value',$value,$filter->operator);
+										}
+										$node_ids = array();
+										foreach ($attvals->findAll(1) as $av) {
+												$node_ids[] = $av->node_id;
+										}
+										if (!isset($av_node_id_array)) {
+												$av_node_id_array = $node_ids;
+										} else {
+												$av_node_id_array = array_intersect($av_node_id_array,$node_ids);
+										}
 								}
 						}
 				}
@@ -112,6 +137,10 @@ class Dase_DBO_Nodeset extends Dase_DBO_Autogen_Nodeset
 				if (isset($av_node_id_array)) {
 						$node_id_array = array_intersect($node_id_array,$av_node_id_array);
 				}  
+
+				if (count($poison_node_id_array)) {
+						$node_id_array = array_diff($node_id_array,$poison_node_id_array);
+				}
 
 				$fields = array();
 				$sorters = $this->getSorters();

@@ -18,6 +18,18 @@ class Dase_Handler_Page extends Dase_Handler
 				'{seg1}/{seg2}/{seg3}/{seg4}/{seg5}' => 'node',
 		);
 
+		protected function setup($r)
+		{
+				$t = new Dase_Template($r);
+				$node = new Dase_DBO_Node($this->db);
+				$node->alias = 'site';
+				$node = $node->findOne();
+				if ($node) {
+						$t->assign('site',$node->asPhp($r));
+				}
+				$this->t = $t;
+		}
+
 		private function _getUri($r)
 		{
 				if ($r->has('uri')) {
@@ -33,7 +45,7 @@ class Dase_Handler_Page extends Dase_Handler
 		} 
 
 		public function getNode($r) { 
-				$t = new Dase_Template($r);
+				$t = $this->t;
 				$node = new Dase_DBO_Node($this->db);
 				$alias = $this->_getUri($r);
 				$node->alias = $alias;
@@ -42,11 +54,14 @@ class Dase_Handler_Page extends Dase_Handler
 						$this->getDynamicPage($r,$alias);
 						$r->renderError(404);
 				}
-				$t->assign('node',$node);
+				$node->runHook($r,$t);
+				$t->assign('node',$node->asPhp($r));
+
+				//is this necessary??:
 				if ('image' == substr($node->mime,0,5)) {
 						$t->assign('is_image',1);
 				}
-				$template_file = 'pages/page-'.$node->alias.'.tpl';
+				$template_file = 'pages/'.Dase_Util::dirify($node->alias).'.tpl';
 				if ($t->template_exists($template_file)) {
 						$r->renderResponse($t->fetch($template_file));
 				} else {
@@ -56,6 +71,7 @@ class Dase_Handler_Page extends Dase_Handler
 
 		public function getDynamicPage($r,$uri_path)
 		{
+				$t = $this->t;
 				$nodes = new Dase_DBO_Node($this->db);
 				$nodes->addWhere('dynamic_alias','','>');
 				$matches = array();
@@ -89,9 +105,9 @@ class Dase_Handler_Page extends Dase_Handler
 				if (!$matched_node) {
 						$r->renderError(404);
 				}
-				$t = new Dase_Template($r);
+				$matched_node->runHook($r,$t);
 				$t->assign('node',$matched_node->asPhp($r));
-				$template_file = 'pages/page-'.$matched_node->alias.'.tpl';
+				$template_file = 'pages/'.Dase_Util::dirify($matched_node->alias).'.tpl';
 				if ($t->template_exists($template_file)) {
 						$r->renderResponse($t->fetch($template_file));
 				} else {

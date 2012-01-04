@@ -5,11 +5,16 @@ class Dase_Handler_Node extends Dase_Handler
 		public $resource_map = array(
 				'select_list' => 'select_list',
 				'{name}' => 'node',
+				'{id}/prev' => 'prev_node',
+				'{id}/next' => 'next_node',
 				'thumb/{name}' => 'thumbnail',
 				'{id}/edit' => 'node_form',
 				'{id}/swap' => 'swap_file',
 				'{id}/alias' => 'node_alias',
+				'{id}/hook' => 'node_hook',
 				'{id}/attvals' => 'node_attvals',
+				'{id}/attvals/prev' => 'node_attvals_prev',
+				'{id}/attvals/next' => 'node_attvals_next',
 				'{id}/attachments' => 'attachments',
 				'{id}/{att}' => 'node_field',
 		);
@@ -33,6 +38,34 @@ class Dase_Handler_Node extends Dase_Handler
 						return $this->_findNextUnique($base_dir,$basename,$ext,$iter);
 				}
 
+		}
+
+		private function _getPrevNodeId($node_id)
+		{
+				$nodes = new Dase_DBO_Node($this->db);
+				$nodes->orderBy('updated DESC');
+				$was_id = $node_id;
+				foreach ($nodes->findAll(1) as $n) {
+						if ($node_id == $n->id) {
+								return $was_id;
+						}
+						$was_id = $n->id;
+				}
+		}
+
+		private function _getNextNodeId($node_id)
+		{
+				$nodes = new Dase_DBO_Node($this->db);
+				$nodes->orderBy('updated DESC');
+				$bingo = 0;
+				foreach ($nodes->findAll(1) as $n) {
+						if ($bingo) {
+								return $n->id;
+						}
+						if ($node_id == $n->id) {
+								$bingo = 1;
+						}
+				}
 		}
 
 		private function _findNextUniqueAttachmentName($name,$node,$iter=0)
@@ -111,7 +144,7 @@ class Dase_Handler_Node extends Dase_Handler
 				if (!$node) { 
 						$r->renderError(404); 
 				}
-				if (($this->user->eid != $node->created_by) || !$this->user->is_admin) {
+				if (($this->user->eid != $node->created_by) && !$this->user->is_admin) {
 						$r->renderError(401);
 				}
 				$attval = new Dase_DBO_Attval($this->db);
@@ -136,11 +169,28 @@ class Dase_Handler_Node extends Dase_Handler
 				if (!$node) { 
 						$r->renderError(404); 
 				}
-				if (($this->user->eid != $node->created_by) || !$this->user->is_admin) {
+				if (($this->user->eid != $node->created_by) && !$this->user->is_admin) {
 						$r->renderError(401);
 				}
 				$alias = $this->_findNextUniqueAlias($r->get('alias'),$node);
 				$node->alias = $alias;
+				$node->update();
+				$r->renderOk('success');
+		}
+
+		public function postToNodeHook($r) 
+		{
+				$this->user = $r->getUser();
+				$id = $r->get('id'); 
+				$node = new Dase_DBO_Node($this->db);
+				$node = $node->load($id);
+				if (!$node) { 
+						$r->renderError(404); 
+				}
+				if (($this->user->eid != $node->created_by) && !$this->user->is_admin) {
+						$r->renderError(401);
+				}
+				$node->hook = $r->get('hook');
 				$node->update();
 				$r->renderOk('success');
 		}
@@ -154,7 +204,7 @@ class Dase_Handler_Node extends Dase_Handler
 				if (!$node) { 
 						$r->renderError(404); 
 				}
-				if (($this->user->eid != $node->created_by) || !$this->user->is_admin) {
+				if (($this->user->eid != $node->created_by) && !$this->user->is_admin) {
 						$r->renderError(401);
 				}
 				$att = $r->get('att');
@@ -167,6 +217,30 @@ class Dase_Handler_Node extends Dase_Handler
 				$r->renderOk('success');
 		}
 
+		public function deleteNode($r)
+		{
+				$this->user = $r->getUser();
+				//will be numeric id
+				$id = $r->get('name'); 
+				$node = new Dase_DBO_Node($this->db);
+				$node = $node->load($id);
+				if (!$node) { 
+						$r->renderError(404); 
+				}
+				if (($this->user->eid != $node->created_by) && !$this->user->is_admin) {
+						$r->renderError(401);
+				}
+				if (!strpos($node->thumbnail_path,'/mime_')) {
+						@unlink($node->thumbnail_path);
+				}
+				if (!strpos($node->filepath,'/mime_')) {
+						@unlink($node->filepath);
+				}
+				$node->expunge();
+				$r->response_mime_type = 'application/json';
+				$r->renderResponse('{"location":"nodes"}');
+		}
+
 		public function postToSwapFile($r)
 		{
 				$this->user = $r->getUser();
@@ -177,7 +251,7 @@ class Dase_Handler_Node extends Dase_Handler
 						$r->renderError(404); 
 				}
 
-				if (($this->user->eid != $node->created_by) || !$this->user->is_admin) {
+				if (($this->user->eid != $node->created_by) && !$this->user->is_admin) {
 						$r->renderError(401);
 				}
 
@@ -260,7 +334,8 @@ class Dase_Handler_Node extends Dase_Handler
 
 		}
 
-		public function getNodeForm($r) { 
+		public function getNodeForm($r) 
+		{ 
 				$this->user = $r->getUser();
 				$id = $r->get('id'); 
 				$node = new Dase_DBO_Node($this->db);
@@ -268,15 +343,19 @@ class Dase_Handler_Node extends Dase_Handler
 				if (!$node) { 
 						$r->renderError(404); 
 				}
-				if (($this->user->eid != $node->created_by) || !$this->user->is_admin) {
+				if (($this->user->eid != $node->created_by) && !$this->user->is_admin) {
 						$r->renderError(401);
 				}
 				$t = new Dase_Template($r);
+				if ('image' == substr($node->mime,0,5)) {
+						$t->assign('is_image',1);
+				}
 				$t->assign('node', $node);
 				$r->renderResponse($t->fetch('edit_node_form.tpl'));
 		}
 
-		public function getAttachments($r) { 
+		public function getAttachments($r) 
+		{ 
 				$this->user = $r->getUser();
 				$id = $r->get('id'); 
 				$node = new Dase_DBO_Node($this->db);
@@ -284,7 +363,7 @@ class Dase_Handler_Node extends Dase_Handler
 				if (!$node) { 
 						$r->renderError(404); 
 				}
-				if (($this->user->eid != $node->created_by) || !$this->user->is_admin) {
+				if (($this->user->eid != $node->created_by) && !$this->user->is_admin) {
 						$r->renderError(401);
 				}
 				$node->getAttachments();
@@ -302,7 +381,7 @@ class Dase_Handler_Node extends Dase_Handler
 				if (!$node) { 
 						$r->renderError(404); 
 				}
-				if (($this->user->eid != $node->created_by) || !$this->user->is_admin) {
+				if (($this->user->eid != $node->created_by) && !$this->user->is_admin) {
 						$r->renderError(401);
 				}
 				$at = new Dase_DBO_Attachment($this->db);
@@ -335,7 +414,8 @@ class Dase_Handler_Node extends Dase_Handler
 				$r->renderRedirect('node/'.$node->id.'/attachments');
 		}
 
-		public function getNodeAttvals($r) { 
+		public function getNodeAttvals($r) 
+		{ 
 				$this->user = $r->getUser();
 				$id = $r->get('id'); 
 				$node = new Dase_DBO_Node($this->db);
@@ -343,7 +423,7 @@ class Dase_Handler_Node extends Dase_Handler
 				if (!$node) { 
 						$r->renderError(404); 
 				}
-				if (($this->user->eid != $node->created_by) || !$this->user->is_admin) {
+				if (($this->user->eid != $node->created_by) && !$this->user->is_admin) {
 						$r->renderError(401);
 				}
 				$atts = new Dase_DBO_Attribute($this->db);
@@ -358,7 +438,32 @@ class Dase_Handler_Node extends Dase_Handler
 				$r->renderResponse($t->fetch('edit_node_attvals.tpl'));
 		}
 
-		public function getNode($r) { 
+		public function getNodeAttvalsPrev($r)
+		{
+				$prev_id = $this->_getPrevNodeId($r->get('id'));
+				$r->renderRedirect('node/'.$prev_id.'/attvals');
+		}
+
+		public function getNodeAttvalsNext($r)
+		{
+				$next_id = $this->_getNextNodeId($r->get('id'));
+				$r->renderRedirect('node/'.$next_id.'/attvals');
+		}
+
+		public function getPrevNode($r) 
+		{ 
+				$prev_id = $this->_getPrevNodeId($r->get('id'));
+				$r->renderRedirect('node/'.$prev_id);
+		}
+
+		public function getNextNode($r) 
+		{ 
+				$next_id = $this->_getNextNodeId($r->get('id'));
+				$r->renderRedirect('node/'.$next_id);
+		}
+
+		public function getNode($r) 
+		{ 
 				//no file extension assume it is an id
 				$name = $r->get('name'); 
 				$node = new Dase_DBO_Node($this->db);
@@ -380,7 +485,8 @@ class Dase_Handler_Node extends Dase_Handler
 				$r->renderResponse($t->fetch('node.tpl'));
 		}
 
-		public function getNodeJson($r) { 
+		public function getNodeJson($r) 
+		{ 
 				$name = $r->get('name'); 
 				$node = new Dase_DBO_Node($this->db);
 				if (is_numeric($name)) {

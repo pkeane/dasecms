@@ -1,4 +1,5 @@
 {block name="content"}
+<h2>{$nodeset->sorted_nodes|@count} nodes</h2>
 <table class="uploads">
 	<tr>
 		<th></th>

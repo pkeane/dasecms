@@ -6,6 +6,7 @@ class Dase_DBO_Attachment extends Dase_DBO_Autogen_Attachment
 {
 		public $node;
 
+		//parent node
 		public function getNode()
 		{
 				$node = new Dase_DBO_Node($this->db);

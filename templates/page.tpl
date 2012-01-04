@@ -1,9 +1,9 @@
-{extends file="layout.tpl"}
+{extends file="labs_layout.tpl"}
 
-{block name="main"}
+{block name="content"}
 <h1>{$node->title}</h1>
 <p>
-{$node->body}
+{$node->body|markdown}
 </p>
 {if $is_image}
 <img src="node/{$node->name}">

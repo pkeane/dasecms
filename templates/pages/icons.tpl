@@ -1,4 +1,4 @@
-{extends file="eanthro-layout.tpl"}
+{extends file="labs_layout.tpl"}
 
 {block name="content"}
 <h1>{$node->title}</h1>

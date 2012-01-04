@@ -16,6 +16,15 @@
 		{/if}
 		(<a href="node/{$node->id}">node/{$node->id}</a>)
 	</h2>
+<a href="node/{$node->id}/attvals/prev">prev</a> | <a href="node/{$node->id}/attvals/next">next</a>
+
+<p>
+{$node->body}
+</p>
+{if $node->is_image}
+<img src="node/{$node->name}">
+{/if}
+
 	<table id="node_meta" class="node_form">
 		<tr class="headers">
 			<th>Attribute</th>
@@ -50,6 +59,19 @@
 				<td></td>
 			</form>
 		</tr>
+	<tr class="headers">
+		<th>Field</th>
+		<td>Value</td>
+		<td></td>
+	</tr>
+	{foreach item=v key=k from=$node}
+	<tr>
+		<th>{$k}</th>
+		<td>{$v}</td>
+		<td></td>
+	</tr>
+	{/foreach}
+
 	</table>
 </div>
 {/block}
